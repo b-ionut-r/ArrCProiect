@@ -6,18 +6,25 @@ set(MAIN_PROJECT_NAME "oop")
 set(MAIN_EXECUTABLE_NAME "${MAIN_PROJECT_NAME}")
 
 
-project(${MAIN_PROJECT_NAME})
+project(${MAIN_PROJECT_NAME} LANGUAGES CXX CUDA)
 # set(CMAKE_PROJECT_VERSION_MAJOR 0)
 # set(CMAKE_PROJECT_VERSION_MINOR 0)
 # set(CMAKE_PROJECT_VERSION_PATCH 1)
 
-set(CMAKE_CXX_STANDARD 23)
+# C++ standard (17 for CUDA compatibility)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# CUDA standard
+set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_ARCHITECTURES native)
+
 # You aren't supposed to be using this, but convenience...
-file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*")
-file(GLOB_RECURSE HEADERS RELATIVE ${CMAKE_SOURCE_DIR} "include/*")
+file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp")
+file(GLOB_RECURSE CUDA_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cu")
+file(GLOB_RECURSE HEADERS RELATIVE ${CMAKE_SOURCE_DIR} "include/*.h" "include/*.cuh")
 file(GLOB_RECURSE TESTS RELATIVE ${CMAKE_SOURCE_DIR} "test/*.cpp")
 include_directories(include)
 include_directories(src)
@@ -130,7 +137,7 @@ FetchContent_MakeAvailable(googletest)
 ###############################################################################
 
 # NOTE: update executable name in .github/workflows/cmake.yml:25 when changing name here
-add_executable(${MAIN_EXECUTABLE_NAME} main.cpp ${SOURCES})
+add_executable(${MAIN_EXECUTABLE_NAME} main.cpp ${SOURCES} ${CUDA_SOURCES})
 
 # NOTE: Add all defined targets (e.g. executables, libraries, etc. )
 # NOTE: RUN_SANITIZERS is optional, if it's not present it will default to true
