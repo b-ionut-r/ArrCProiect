@@ -49,8 +49,9 @@ runs:
         echo "CUDA_PATH=/usr/local/cuda-12.4" >> $GITHUB_ENV
 
     - name: Install CUDA Toolkit (Windows)
-      shell: bash
       if: runner.os == 'Windows'
-      run: |
-        choco install cuda --version=12.4.0.55122 -y
-        echo "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.4/bin" >> $GITHUB_PATH
+      uses: Jimver/cuda-toolkit@v0.2.16
+      with:
+        cuda: '12.4.0'
+        method: 'network'
+        sub-packages: '["nvcc", "cudart"]'
