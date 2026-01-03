@@ -27,9 +27,23 @@ function(set_compiler_flags)
         # custom compiler flags
         message("Compiler: ${CMAKE_CXX_COMPILER_ID} version ${CMAKE_CXX_COMPILER_VERSION}")
         if(MSVC)
-            target_compile_options(${TARGET_NAME} PRIVATE /W4 /permissive- /wd4244 /wd4267 /wd4996 /external:anglebrackets /external:W0 /utf-8 /MP)
+            target_compile_options(${TARGET_NAME} PRIVATE
+                $<$<COMPILE_LANGUAGE:CXX>:/W4>
+                $<$<COMPILE_LANGUAGE:CXX>:/permissive->
+                $<$<COMPILE_LANGUAGE:CXX>:/wd4244>
+                $<$<COMPILE_LANGUAGE:CXX>:/wd4267>
+                $<$<COMPILE_LANGUAGE:CXX>:/wd4996>
+                $<$<COMPILE_LANGUAGE:CXX>:/external:anglebrackets>
+                $<$<COMPILE_LANGUAGE:CXX>:/external:W0>
+                $<$<COMPILE_LANGUAGE:CXX>:/utf-8>
+                $<$<COMPILE_LANGUAGE:CXX>:/MP>
+            )
         else()
-            target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -pedantic)
+            target_compile_options(${TARGET_NAME} PRIVATE
+                $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+                $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
+                $<$<COMPILE_LANGUAGE:CXX>:-pedantic>
+            )
         endif()
 
         ###############################################################################

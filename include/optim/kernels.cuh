@@ -50,7 +50,7 @@ __global__ void fusedRMSPropKernel(
     CompT denom;
     g += (CompT) weightDecay * p;
     m = (CompT) beta * m + (CompT) (1 - beta) * g * g;
-    denom = (CompT)::sqrt(m) + (CompT)eps;
+    denom = (CompT)::sqrt((double)m) + (CompT)eps;
     p -= (CompT)lr * g / denom;
 
     // Downcast precision if needed
@@ -96,7 +96,7 @@ __global__ void fusedAdamKernel(
    m2 = (CompT)beta2 * m2 + (CompT) (1 - beta2) * (g * g);
    m1Corr = m1 / (CompT)(biasCorrection1);
    m2Corr = m2 / (CompT)(biasCorrection2);
-   p -= (CompT)lr * m1Corr / ((CompT)::sqrt(m2Corr) + (CompT)eps);
+   p -= (CompT)lr * m1Corr / ((CompT)::sqrt((double)m2Corr) + (CompT)eps);
 
    // Downcast precision if needed
    param[idx] = (ParamT)p;

@@ -189,22 +189,6 @@ else()
     message(FATAL_ERROR "No main.cpp or main.cu found in project root.")
 endif()
 
-# Ensure standard library headers used in CUDA headers are available early.
-set(PREINCLUDE_HEADER "${CMAKE_SOURCE_DIR}/cmake/preinclude.h")
-if(EXISTS "${PREINCLUDE_HEADER}")
-    if(MSVC)
-        target_compile_options(${MAIN_EXECUTABLE_NAME} PRIVATE
-            $<$<COMPILE_LANGUAGE:CXX>:/FI${PREINCLUDE_HEADER}>
-            $<$<COMPILE_LANGUAGE:CUDA>:--pre-include=${PREINCLUDE_HEADER}>
-        )
-    else()
-        target_compile_options(${MAIN_EXECUTABLE_NAME} PRIVATE
-            $<$<COMPILE_LANGUAGE:CXX>:-include;${PREINCLUDE_HEADER}>
-            $<$<COMPILE_LANGUAGE:CUDA>:--pre-include=${PREINCLUDE_HEADER}>
-        )
-    endif()
-endif()
-
 # Disable warnings-as-errors for CUDA builds to avoid NVCC host warnings.
 if(CUDA_ENABLED AND PROJECT_WARNINGS_AS_ERRORS)
     message(STATUS "Warnings-as-errors disabled for CUDA build")
@@ -224,8 +208,6 @@ set_compiler_flags(RUN_SANITIZERS ${RUN_SANITIZERS} TARGET_NAMES ${MAIN_EXECUTAB
 
 ###############################################################################
 
-# use SYSTEM so cppcheck and clang-tidy do not report warnings from these directories
-target_include_directories(${MAIN_EXECUTABLE_NAME} SYSTEM PRIVATE generated/include)
 # target_include_directories(${MAIN_EXECUTABLE_NAME} SYSTEM PRIVATE ext/<SomeHppLib>/include)
 # target_include_directories(${MAIN_EXECUTABLE_NAME} SYSTEM PRIVATE ${<SomeLib>_SOURCE_DIR}/include)
 # target_link_directories(${MAIN_EXECUTABLE_NAME} PRIVATE ${<SomeLib>_BINARY_DIR}/lib)
