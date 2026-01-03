@@ -28,18 +28,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Collect source files
-# Use absolute paths for reliable source file property handling
-file(GLOB_RECURSE CPP_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE CPP_HEADERS "${CMAKE_SOURCE_DIR}/include/*.h" "${CMAKE_SOURCE_DIR}/include/*.hpp")
 
 if(CUDA_ENABLED)
+    # Only compile .cu files - .cpp files that need CUDA have .cu wrappers
     file(GLOB_RECURSE CUDA_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cu")
     file(GLOB_RECURSE CUDA_HEADERS "${CMAKE_SOURCE_DIR}/include/*.cuh")
 
-    # Force ALL .cpp files to be compiled as CUDA (they use cuda_runtime.h)
-    set_source_files_properties(${CPP_SOURCES} PROPERTIES LANGUAGE CUDA)
-
-    set(SOURCES ${CPP_SOURCES} ${CUDA_SOURCES})
+    set(SOURCES ${CUDA_SOURCES})
     set(HEADERS ${CPP_HEADERS} ${CUDA_HEADERS})
 
     # Set CUDA architectures for compatibility
@@ -47,6 +43,8 @@ if(CUDA_ENABLED)
         set(CMAKE_CUDA_ARCHITECTURES "50;60;70;80")
     endif()
 else()
+    # Non-CUDA build: only pure C++ files
+    file(GLOB_RECURSE CPP_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp")
     set(SOURCES ${CPP_SOURCES})
     set(HEADERS ${CPP_HEADERS})
 endif()
