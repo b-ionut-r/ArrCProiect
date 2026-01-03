@@ -21,11 +21,6 @@ public:
     template<typename T>
     std::shared_ptr<T> operator()(const std::vector<tensor::TensorSharedVariant>& inputs,
                                   std::shared_ptr<Function> self);
-    template<typename T>
-    std::shared_ptr<T> apply(const std::vector<tensor::TensorSharedVariant>& inputs,
-                             std::shared_ptr<Function> self) {
-        return operator()<T>(inputs, std::move(self));
-    }
 
     virtual arr::NDArrayPtrVariant forward(const std::vector<arr::NDArrayPtrVariant>& inputs) const = 0;
     virtual std::vector<arr::NDArrayUniquePtrVariant> backward(

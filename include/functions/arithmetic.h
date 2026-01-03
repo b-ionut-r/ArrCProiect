@@ -223,39 +223,39 @@ namespace functions {
 template <typename dtype>
 Tensor<dtype> operator+(const Tensor<dtype>& a, const Tensor<dtype>& b) {
     auto fn = functions::add();
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared(), b.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared(), b.shared()}, fn));
 }
 
 template <typename dtype>
 Tensor<dtype> operator-(const Tensor<dtype>& a, const Tensor<dtype>& b) {
     auto fn = functions::sub();
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared(), b.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared(), b.shared()}, fn));
 }
 
 template <typename dtype>
 Tensor<dtype> operator*(const Tensor<dtype>& a, const Tensor<dtype>& b) {
     auto fn = functions::mul();
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared(), b.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared(), b.shared()}, fn));
 }
 
 template <typename dtype>
 Tensor<dtype> operator/(const Tensor<dtype>& a, const Tensor<dtype>& b) {
     auto fn = functions::div();
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared(), b.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared(), b.shared()}, fn));
 }
 
 // Unary negation
 template <typename dtype>
 Tensor<dtype> operator-(const Tensor<dtype>& a) {
     auto fn = functions::affine<dtype>(dtype(-1), dtype(0));
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared()}, fn));
 }
 
 // Tensor-scalar operators
 template <typename dtype>
 Tensor<dtype> operator+(const Tensor<dtype>& a, dtype v) {
     auto fn = functions::affine<dtype>(dtype(1), v);
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared()}, fn));
 }
 
 template <typename dtype>
@@ -264,19 +264,19 @@ Tensor<dtype> operator+(dtype v, const Tensor<dtype>& a) { return a + v; }
 template <typename dtype>
 Tensor<dtype> operator-(const Tensor<dtype>& a, dtype v) {
     auto fn = functions::affine<dtype>(dtype(1), -v);
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared()}, fn));
 }
 
 template <typename dtype>
 Tensor<dtype> operator-(dtype v, const Tensor<dtype>& a) {
     auto fn = functions::affine<dtype>(dtype(-1), v);
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared()}, fn));
 }
 
 template <typename dtype>
 Tensor<dtype> operator*(const Tensor<dtype>& a, dtype v) {
     auto fn = functions::affine<dtype>(v, dtype(0));
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared()}, fn));
 }
 
 template <typename dtype>
@@ -285,13 +285,13 @@ Tensor<dtype> operator*(dtype v, const Tensor<dtype>& a) { return a * v; }
 template <typename dtype>
 Tensor<dtype> operator/(const Tensor<dtype>& a, dtype v) {
     auto fn = functions::affine<dtype>(dtype(1) / v, dtype(0));
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared()}, fn));
 }
 
 template <typename dtype>
 Tensor<dtype> operator/(dtype v, const Tensor<dtype>& a) {
     auto fn = functions::rdiv<dtype>(v);
-    return Tensor<dtype>(fn->apply<TensorPtr<dtype> >({a.shared()}, fn));
+    return Tensor<dtype>(fn->operator()<TensorPtr<dtype>>({a.shared()}, fn));
 }
 
 #endif //ARRC_ARITHMETIC_H
