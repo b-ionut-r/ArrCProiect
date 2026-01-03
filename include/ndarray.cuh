@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <memory>
 #include "ndarray.cuh"
 #include "elementwise_kernels.cuh"
 #include "slices.h"

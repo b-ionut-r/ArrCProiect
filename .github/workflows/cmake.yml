@@ -211,6 +211,10 @@ jobs:
       - name: Install packages
         uses: ./.github/actions/install-packages
 
+      - name: Override build type for MSVC CUDA
+        if: runner.os == 'Windows' && matrix.cxx == 'cl'
+        run: echo "BUILD_TYPE=Release" >> ${GITHUB_ENV}
+
       - name: Configure CMake
         uses: ./.github/actions/configure-cmake
         with:
