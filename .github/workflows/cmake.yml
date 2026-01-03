@@ -152,16 +152,18 @@ jobs:
           #   cxx: g++-13
           #   name: "macOS 14 GCC 13"
 
-          - os: windows-2022
+          # Use windows-2019 to avoid MSVC 19.44 ICE bug with std::visit + generic lambdas in CUDA
+          # MSVC 19.29 (VS 2019) doesn't have this bug
+          - os: windows-2019
             c: cl
             cxx: cl
-            name: "ASan: Windows 2022 MSVC 19.43"
-            cmake_flags: "-DUSE_ASAN=ON"
+            name: "Windows 2019 MSVC"
+            # ASan disabled - not well supported with CUDA on Windows
+            # cmake_flags: "-DUSE_ASAN=ON"
             # Ninja is not faster on MSVC because... MSVC
             # cmake_generator: "Ninja"
             # cmake_generator: "Ninja Multi-Config"
-            # This env runs address sanitizers
-            runs_asan: true
+            runs_asan: false
 
 
     steps:

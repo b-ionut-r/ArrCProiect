@@ -51,9 +51,12 @@ if(CUDA_ENABLED)
     # Workaround for MSVC 19.44+ internal compiler error (ICE) with CUDA
     # See: https://developercommunity.visualstudio.com/
     # Error: fatal error C1001 in type_traits / lambdas.cpp
+    # The ICE is in the conforming lambda processor when handling std::visit with generic lambdas
     if(MSVC AND MSVC_VERSION GREATER_EQUAL 1944)
         message(STATUS "Applying MSVC 19.44+ ICE workaround for CUDA")
-        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=/d2SSAOptimizer-")
+        # /Zc:lambda- disables the new conforming lambda processor that causes ICE
+        # /d2SSAOptimizer- disables SSA optimizer (additional safety)
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=/Zc:lambda-,/d2SSAOptimizer-")
     endif()
 else()
     # Non-CUDA build: only pure C++ files
