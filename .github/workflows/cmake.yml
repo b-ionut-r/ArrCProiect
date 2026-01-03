@@ -195,7 +195,8 @@ jobs:
         uses: Jimver/cuda-toolkit@v0.2.22
         id: cuda-toolkit-windows
         with:
-          cuda: '12.6.3'
+          # Use CUDA 12.4 on Windows - CUDA 12.6 has template recursion issues with MSVC's STL
+          cuda: '12.4.0'
           method: 'local'
           sub-packages: '["nvcc", "cudart", "visual_studio_integration"]'
 
