@@ -196,26 +196,19 @@ public:
 };
 
 namespace tensor {
+    // Reduced variant types to avoid NVCC template recursion limits with MSVC's STL
     using TensorSharedVariant = std::variant<
         std::shared_ptr<TensorPtr<int32_t>>,
-        std::shared_ptr<TensorPtr<int64_t>>,
-        std::shared_ptr<TensorPtr<size_t>>,
         std::shared_ptr<TensorPtr<float>>,
         std::shared_ptr<TensorPtr<double>>,
-        std::shared_ptr<TensorPtr<__half>>,
-        std::shared_ptr<TensorPtr<__nv_bfloat16>>,
-        std::shared_ptr<TensorPtr<bool>>
+        std::shared_ptr<TensorPtr<__nv_bfloat16>>
     >;
 
     using TensorWeakVariant = std::variant<
         std::weak_ptr<TensorPtr<int32_t>>,
-        std::weak_ptr<TensorPtr<int64_t>>,
-        std::weak_ptr<TensorPtr<size_t>>,
         std::weak_ptr<TensorPtr<float>>,
         std::weak_ptr<TensorPtr<double>>,
-        std::weak_ptr<TensorPtr<__half>>,
-        std::weak_ptr<TensorPtr<__nv_bfloat16>>,
-        std::weak_ptr<TensorPtr<bool>>
+        std::weak_ptr<TensorPtr<__nv_bfloat16>>
     >;
 
     template<typename dtype>

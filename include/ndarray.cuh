@@ -695,36 +695,25 @@ BroadcastInfo<dtype> getBroadcastInfo(const NDArray<dtype> &a, const NDArray<dty
 namespace arr {
     template <typename dtype>
     using NDArray = NDArray<dtype>;
+    // Reduced variant types to avoid NVCC template recursion limits with MSVC's STL
     using NDArrayVariant = std::variant<
         NDArray<int32_t>,
-        NDArray<int64_t>,
-        NDArray<size_t>,
         NDArray<float>,
         NDArray<double>,
-        NDArray<__half>,
-        NDArray<__nv_bfloat16>,
-        NDArray<bool>
+        NDArray<__nv_bfloat16>
     >;
     using NDArrayPtrVariant = std::variant<
         NDArray<int32_t>*,
-        NDArray<int64_t>*,
-        NDArray<size_t>*,
         NDArray<float>*,
         NDArray<double>*,
-        NDArray<__half>*,
-        NDArray<__nv_bfloat16>*,
-        NDArray<bool>*
+        NDArray<__nv_bfloat16>*
     >;
 
     using NDArrayUniquePtrVariant = std::variant<
         std::unique_ptr<NDArray<int32_t>>,
-        std::unique_ptr<NDArray<int64_t>>,
-        std::unique_ptr<NDArray<size_t>>,
         std::unique_ptr<NDArray<float>>,
         std::unique_ptr<NDArray<double>>,
-        std::unique_ptr<NDArray<__half>>,
-        std::unique_ptr<NDArray<__nv_bfloat16>>,
-        std::unique_ptr<NDArray<bool>>
+        std::unique_ptr<NDArray<__nv_bfloat16>>
     >;
 
     template <typename dtype>
