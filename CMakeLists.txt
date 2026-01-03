@@ -12,10 +12,12 @@ include(CheckLanguage)
 check_language(CUDA)
 if(CMAKE_CUDA_COMPILER)
     enable_language(CUDA)
+    find_package(CUDAToolkit REQUIRED)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CUDA_ENABLED TRUE)
     message(STATUS "CUDA found: ${CMAKE_CUDA_COMPILER}")
+    message(STATUS "CUDA Toolkit: ${CUDAToolkit_LIBRARY_DIR}")
 else()
     set(CUDA_ENABLED FALSE)
     message(STATUS "CUDA not found - building without CUDA support")
@@ -25,17 +27,25 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Collect source files - only include .cu files if CUDA is enabled
-file(GLOB_RECURSE CPP_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp")
-file(GLOB_RECURSE CPP_HEADERS RELATIVE ${CMAKE_SOURCE_DIR} "include/*.h" "include/*.hpp")
+# Collect source files
+# Use absolute paths for reliable source file property handling
+file(GLOB_RECURSE CPP_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp")
+file(GLOB_RECURSE CPP_HEADERS "${CMAKE_SOURCE_DIR}/include/*.h" "${CMAKE_SOURCE_DIR}/include/*.hpp")
 
 if(CUDA_ENABLED)
-    file(GLOB_RECURSE CUDA_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cu")
-    file(GLOB_RECURSE CUDA_HEADERS RELATIVE ${CMAKE_SOURCE_DIR} "include/*.cuh")
+    file(GLOB_RECURSE CUDA_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cu")
+    file(GLOB_RECURSE CUDA_HEADERS "${CMAKE_SOURCE_DIR}/include/*.cuh")
+
+    # Force ALL .cpp files to be compiled as CUDA (they use cuda_runtime.h)
+    set_source_files_properties(${CPP_SOURCES} PROPERTIES LANGUAGE CUDA)
+
     set(SOURCES ${CPP_SOURCES} ${CUDA_SOURCES})
     set(HEADERS ${CPP_HEADERS} ${CUDA_HEADERS})
-    # Force .cpp files that use CUDA to be compiled with nvcc
-    set_source_files_properties(${CPP_SOURCES} PROPERTIES LANGUAGE CUDA)
+
+    # Set CUDA architectures for compatibility
+    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        set(CMAKE_CUDA_ARCHITECTURES "50;60;70;80")
+    endif()
 else()
     set(SOURCES ${CPP_SOURCES})
     set(HEADERS ${CPP_HEADERS})
@@ -160,10 +170,16 @@ FetchContent_MakeAvailable(googletest)
 # NOTE: update executable name in .github/workflows/cmake.yml:25 when changing name here
 # Support both main.cpp and main.cu
 if(EXISTS "${CMAKE_SOURCE_DIR}/main.cu" AND CUDA_ENABLED)
-    add_executable(${MAIN_EXECUTABLE_NAME} main.cu ${SOURCES})
-    set_target_properties(${MAIN_EXECUTABLE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+    add_executable(${MAIN_EXECUTABLE_NAME} "${CMAKE_SOURCE_DIR}/main.cu" ${SOURCES})
+    set_target_properties(${MAIN_EXECUTABLE_NAME} PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+        CUDA_RESOLVE_DEVICE_SYMBOLS ON
+        LINKER_LANGUAGE CUDA
+    )
+    # Link CUDA runtime
+    target_link_libraries(${MAIN_EXECUTABLE_NAME} PRIVATE CUDA::cudart)
 elseif(EXISTS "${CMAKE_SOURCE_DIR}/main.cpp")
-    add_executable(${MAIN_EXECUTABLE_NAME} main.cpp ${SOURCES})
+    add_executable(${MAIN_EXECUTABLE_NAME} "${CMAKE_SOURCE_DIR}/main.cpp" ${SOURCES})
 elseif(EXISTS "${CMAKE_SOURCE_DIR}/main.cu" AND NOT CUDA_ENABLED)
     message(FATAL_ERROR "This project requires CUDA but CUDA was not found. Please install CUDA toolkit.")
 else()
