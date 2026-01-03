@@ -118,7 +118,7 @@ int main() {
             cout << "Citit din stringstream:\n" << citit << endl;
 
             // operator[] pentru indexare
-            citit[{0, 0}] = 99.0f;
+            citit[vector<int>{0, 0}] = 99.0f;
             cout << "Dupa modificare [0,0]=99:\n" << citit << endl;
 
             // Static member
@@ -133,8 +133,8 @@ int main() {
             // Handle-style Tensor API (shared_ptr internally)
             Tensor<float> x = tensor::zeros<float>({1}, true);
             Tensor<float> y = tensor::zeros<float>({1}, true);
-            x.data()[{0}] = 3.0f;
-            y.data()[{0}] = 4.0f;
+            x.data()[vector<int>{0}] = 3.0f;
+            y.data()[vector<int>{0}] = 4.0f;
 
             cout << "x = " << x.data() << endl;
             cout << "y = " << y.data() << endl;
@@ -245,7 +245,7 @@ int main() {
 
             try {
                 NDArray<float> a({2, 2});
-                float x = a[{0}];  // nevoie de 2 indici
+                float x = a[vector<int>{0}];  // nevoie de 2 indici
                 (void)x;
             } catch (const ArrcException& e) {
                 cout << "  " << e.what() << endl;
@@ -259,10 +259,10 @@ int main() {
             cout << "Minimizam f(x) = (x - 3)^2, start x = 10\n\n";
 
             Tensor<float> x = tensor::zeros<float>({1}, true);
-            x.data()[{0}] = 10.0f;
+            x.data()[vector<int>{0}] = 10.0f;
 
             Tensor<float> target = tensor::zeros<float>({1}, false);
-            target.data()[{0}] = 3.0f;
+            target.data()[vector<int>{0}] = 3.0f;
 
             vector<tensor::TensorSharedVariant> params = {x.shared()};
             Adam optimizer(params, 0.3f, 0.0f, 0.9f, 0.999f);
@@ -274,9 +274,9 @@ int main() {
                 auto diff = x - target;
                 auto loss = diff * diff;
 
-                float loss_val = loss.data()[{0}];
+                float loss_val = loss.data()[vector<int>{0}];
                 if (step % 5 == 0) {
-                    cout << "Step " << step << ": x = " << x.data()[{0}]
+                    cout << "Step " << step << ": x = " << x.data()[vector<int>{0}]
                          << ", loss = " << loss_val << endl;
                 }
                 loss.backward();
@@ -284,7 +284,7 @@ int main() {
 
                 // No manual delete needed - shared_ptr handles cleanup
             }
-            cout << "\nFinal: x = " << x.data()[{0}] << " (target: 3.0)\n";
+            cout << "\nFinal: x = " << x.data()[vector<int>{0}] << " (target: 3.0)\n";
             break;
         }
 
