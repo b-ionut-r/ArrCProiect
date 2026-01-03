@@ -169,6 +169,11 @@ jobs:
             name: "Windows 2022 MinGW GCC 13"
             # cmake_flags:
             cmake_generator: Ninja
+            # CUDA doesn't support MinGW, only MSVC on Windows
+            cuda_incompatible: true
+
+    # Allow CUDA-incompatible builds to fail without blocking
+    continue-on-error: ${{ matrix.cuda_incompatible == true }}
 
     steps:
       - name: Checkout repo
@@ -188,18 +193,20 @@ jobs:
       - name: Install CUDA Toolkit (Linux)
         if: runner.os == 'Linux'
         uses: Jimver/cuda-toolkit@v0.2.16
+        id: cuda-toolkit-linux
         with:
           cuda: '12.4.0'
           method: 'network'
           sub-packages: '["nvcc", "cudart"]'
 
       - name: Install CUDA Toolkit (Windows)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && matrix.cuda_incompatible != true
         uses: Jimver/cuda-toolkit@v0.2.16
+        id: cuda-toolkit-windows
         with:
           cuda: '12.4.0'
           method: 'network'
-          sub-packages: '["nvcc", "cudart"]'
+          sub-packages: '["nvcc", "cudart", "visual_studio_integration"]'
 
       - name: Install packages
         uses: ./.github/actions/install-packages

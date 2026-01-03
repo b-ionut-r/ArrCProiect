@@ -34,6 +34,8 @@ if(CUDA_ENABLED)
     file(GLOB_RECURSE CUDA_HEADERS RELATIVE ${CMAKE_SOURCE_DIR} "include/*.cuh")
     set(SOURCES ${CPP_SOURCES} ${CUDA_SOURCES})
     set(HEADERS ${CPP_HEADERS} ${CUDA_HEADERS})
+    # Force .cpp files that use CUDA to be compiled with nvcc
+    set_source_files_properties(${CPP_SOURCES} PROPERTIES LANGUAGE CUDA)
 else()
     set(SOURCES ${CPP_SOURCES})
     set(HEADERS ${CPP_HEADERS})
@@ -74,6 +76,12 @@ endfunction()
 
 
 function(set_custom_stdlib_and_sanitizers target add_apple_asan)
+    # Skip sanitizers for CUDA builds - they are incompatible
+    if(CUDA_ENABLED)
+        message(STATUS "Sanitizers disabled for CUDA build")
+        return()
+    endif()
+
     if(MSVC)
         # see https://gitlab.kitware.com/cmake/cmake/-/issues/24922
         set_target_properties(${target} PROPERTIES VS_USER_PROPS "${CMAKE_SOURCE_DIR}/disable_modules.props")
