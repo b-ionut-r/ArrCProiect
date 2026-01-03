@@ -42,4 +42,6 @@ runs:
           jq -r '.[] | .file' |                    # select source file paths from CMake project; -r to strip quotes
           grep -v "/${BUILD_DIR}/_deps/" |         # ignore external dependencies
           grep -v "/${EXT_DIR}/" |                 # ignore external vendored dependencies
+          grep -v '\.cu$' |                        # ignore CUDA source files
+          grep -v '\.cuh$' |                       # ignore CUDA header files
           xargs clang-tidy-${{ env.CLANG_VER }} -p "${BUILD_DIR}"

@@ -5,8 +5,20 @@ cmake_minimum_required(VERSION 3.26)
 set(MAIN_PROJECT_NAME "oop")
 set(MAIN_EXECUTABLE_NAME "${MAIN_PROJECT_NAME}")
 
-
 project(${MAIN_PROJECT_NAME})
+
+# Enable CUDA if available
+include(CheckLanguage)
+check_language(CUDA)
+if(CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set(CUDA_ENABLED TRUE)
+else()
+    set(CUDA_ENABLED FALSE)
+    message(STATUS "CUDA not found - building without CUDA support")
+endif()
 # set(CMAKE_PROJECT_VERSION_MAJOR 0)
 # set(CMAKE_PROJECT_VERSION_MINOR 0)
 # set(CMAKE_PROJECT_VERSION_PATCH 1)
@@ -16,8 +28,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # You aren't supposed to be using this, but convenience...
-file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*")
-file(GLOB_RECURSE HEADERS RELATIVE ${CMAKE_SOURCE_DIR} "include/*")
+file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp" "src/*.cu")
+file(GLOB_RECURSE HEADERS RELATIVE ${CMAKE_SOURCE_DIR} "include/*.h" "include/*.hpp" "include/*.cuh")
 file(GLOB_RECURSE TESTS RELATIVE ${CMAKE_SOURCE_DIR} "test/*.cpp")
 include_directories(include)
 include_directories(src)
@@ -130,7 +142,13 @@ FetchContent_MakeAvailable(googletest)
 ###############################################################################
 
 # NOTE: update executable name in .github/workflows/cmake.yml:25 when changing name here
-add_executable(${MAIN_EXECUTABLE_NAME} main.cpp ${SOURCES})
+# Support both main.cpp and main.cu
+if(EXISTS "${CMAKE_SOURCE_DIR}/main.cu" AND CUDA_ENABLED)
+    add_executable(${MAIN_EXECUTABLE_NAME} main.cu ${SOURCES})
+    set_target_properties(${MAIN_EXECUTABLE_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+else()
+    add_executable(${MAIN_EXECUTABLE_NAME} main.cpp ${SOURCES})
+endif()
 
 # NOTE: Add all defined targets (e.g. executables, libraries, etc. )
 # NOTE: RUN_SANITIZERS is optional, if it's not present it will default to true
