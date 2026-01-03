@@ -42,4 +42,4 @@ runs:
     - name: Cppcheck
       shell: bash
       run: |
-        bash ./scripts/run_cppcheck.sh
+        bash ./scripts/run_cppcheck_ci.sh

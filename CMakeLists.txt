@@ -189,6 +189,28 @@ else()
     message(FATAL_ERROR "No main.cpp or main.cu found in project root.")
 endif()
 
+# Ensure standard library headers used in CUDA headers are available early.
+set(PREINCLUDE_HEADER "${CMAKE_SOURCE_DIR}/cmake/preinclude.h")
+if(EXISTS "${PREINCLUDE_HEADER}")
+    if(MSVC)
+        target_compile_options(${MAIN_EXECUTABLE_NAME} PRIVATE
+            $<$<COMPILE_LANGUAGE:CXX>:/FI${PREINCLUDE_HEADER}>
+            $<$<COMPILE_LANGUAGE:CUDA>:--pre-include=${PREINCLUDE_HEADER}>
+        )
+    else()
+        target_compile_options(${MAIN_EXECUTABLE_NAME} PRIVATE
+            $<$<COMPILE_LANGUAGE:CXX>:-include;${PREINCLUDE_HEADER}>
+            $<$<COMPILE_LANGUAGE:CUDA>:--pre-include=${PREINCLUDE_HEADER}>
+        )
+    endif()
+endif()
+
+# Disable warnings-as-errors for CUDA builds to avoid NVCC host warnings.
+if(CUDA_ENABLED AND PROJECT_WARNINGS_AS_ERRORS)
+    message(STATUS "Warnings-as-errors disabled for CUDA build")
+    set(PROJECT_WARNINGS_AS_ERRORS OFF)
+endif()
+
 # NOTE: Add all defined targets (e.g. executables, libraries, etc. )
 # NOTE: RUN_SANITIZERS is optional, if it's not present it will default to true
 set(RUN_SANITIZERS TRUE)
