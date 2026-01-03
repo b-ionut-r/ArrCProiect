@@ -47,6 +47,14 @@ if(CUDA_ENABLED)
             set(CMAKE_CUDA_ARCHITECTURES "50;60;70;80")
         endif()
     endif()
+
+    # Workaround for MSVC 19.44+ internal compiler error (ICE) with CUDA
+    # See: https://developercommunity.visualstudio.com/
+    # Error: fatal error C1001 in type_traits / lambdas.cpp
+    if(MSVC AND MSVC_VERSION GREATER_EQUAL 1944)
+        message(STATUS "Applying MSVC 19.44+ ICE workaround for CUDA")
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=/d2SSAOptimizer-")
+    endif()
 else()
     # Non-CUDA build: only pure C++ files
     file(GLOB_RECURSE CPP_SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp")
