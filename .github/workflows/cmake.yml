@@ -80,6 +80,8 @@ jobs:
 
   build:
     name: ${{ matrix.name }}
+    # Skip CUDA-incompatible toolchains: this project requires CUDA to build.
+    if: ${{ matrix.cuda_incompatible != true }}
     # concurrency:
     #   group: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -172,8 +174,6 @@ jobs:
             # CUDA doesn't support MinGW, only MSVC on Windows
             cuda_incompatible: true
 
-    # Allow CUDA-incompatible builds to fail without blocking
-    continue-on-error: ${{ matrix.cuda_incompatible == true }}
 
     steps:
       - name: Checkout repo
