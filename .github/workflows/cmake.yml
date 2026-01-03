@@ -38,7 +38,7 @@ jobs:
   cppcheck:
     name: "Cppcheck"
     runs-on: ubuntu-22.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     continue-on-error: true  # CUDA headers may cause issues
     env:
       CPPCHECK_VER: "2.14.2"
@@ -47,12 +47,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install CUDA Toolkit
-        run: |
-          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-          sudo dpkg -i cuda-keyring_1.1-1_all.deb
-          sudo apt-get update
-          sudo apt-get install -y cuda-toolkit-12-4
-          echo "/usr/local/cuda-12.4/bin" >> $GITHUB_PATH
+        uses: Jimver/cuda-toolkit@v0.2.16
+        with:
+          cuda: '12.4.0'
+          method: 'network'
+          sub-packages: '["nvcc", "cudart"]'
 
       - name: Run cppcheck
         uses: ./.github/actions/cppcheck
@@ -60,7 +59,7 @@ jobs:
   clang-tidy:
     name: "Clang-Tidy"
     runs-on: ubuntu-22.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     continue-on-error: true  # CUDA headers may cause issues
     env:
       CLANG_VER: 18
@@ -69,12 +68,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install CUDA Toolkit
-        run: |
-          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
-          sudo dpkg -i cuda-keyring_1.1-1_all.deb
-          sudo apt-get update
-          sudo apt-get install -y cuda-toolkit-12-4
-          echo "/usr/local/cuda-12.4/bin" >> $GITHUB_PATH
+        uses: Jimver/cuda-toolkit@v0.2.16
+        with:
+          cuda: '12.4.0'
+          method: 'network'
+          sub-packages: '["nvcc", "cudart"]'
 
       - name: Run clang-tidy
         uses: ./.github/actions/clang-tidy
@@ -186,6 +184,22 @@ jobs:
           # or use only the repo name (github does not have a predefined environment variable for this)
           # the regex splits by / and keeps everything after / without the / character
           # echo "ZIP_NAME=$(echo "${GITHUB_REPOSITORY}_${{ env.BUILD_TYPE }}_${{ matrix.os }}_${{ matrix.cxx }}${{ matrix.asan_name }}" | sed -E 's|.+/(.+)|\1|')" >> ${GITHUB_ENV}
+
+      - name: Install CUDA Toolkit (Linux)
+        if: runner.os == 'Linux'
+        uses: Jimver/cuda-toolkit@v0.2.16
+        with:
+          cuda: '12.4.0'
+          method: 'network'
+          sub-packages: '["nvcc", "cudart"]'
+
+      - name: Install CUDA Toolkit (Windows)
+        if: runner.os == 'Windows'
+        uses: Jimver/cuda-toolkit@v0.2.16
+        with:
+          cuda: '12.4.0'
+          method: 'network'
+          sub-packages: '["nvcc", "cudart"]'
 
       - name: Install packages
         uses: ./.github/actions/install-packages
