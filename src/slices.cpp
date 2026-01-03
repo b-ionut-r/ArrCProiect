@@ -10,7 +10,7 @@ int Slice::size() const {
         if (stop <= start) return 0;
         return (stop - start + step - 1) / step; // ceil
     } else if (step < 0) {
-        if (stop >= start) return 0;
+        if (stop >= start) return 0; //for negative step
         return (start - stop - step - 1) / (-step); // ceil
     } else {
         return 0;
