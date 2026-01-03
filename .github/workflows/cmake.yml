@@ -80,8 +80,6 @@ jobs:
 
   build:
     name: ${{ matrix.name }}
-    # Skip CUDA-incompatible toolchains: this project requires CUDA to build.
-    if: ${{ matrix.cuda_incompatible != true }}
     # concurrency:
     #   group: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -164,15 +162,6 @@ jobs:
             # cmake_generator: "Ninja Multi-Config"
             # This env runs address sanitizers
             runs_asan: true
-
-          - os: windows-2022
-            c: gcc
-            cxx: g++
-            name: "Windows 2022 MinGW GCC 13"
-            # cmake_flags:
-            cmake_generator: Ninja
-            # CUDA doesn't support MinGW, only MSVC on Windows
-            cuda_incompatible: true
 
 
     steps:
