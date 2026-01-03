@@ -40,7 +40,12 @@ if(CUDA_ENABLED)
 
     # Set CUDA architectures for compatibility
     if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-        set(CMAKE_CUDA_ARCHITECTURES "50;60;70;80")
+        if(DEFINED CMAKE_CUDA_COMPILER_VERSION AND
+           CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 12.0)
+            set(CMAKE_CUDA_ARCHITECTURES "60;70;75;80")
+        else()
+            set(CMAKE_CUDA_ARCHITECTURES "50;60;70;80")
+        endif()
     endif()
 else()
     # Non-CUDA build: only pure C++ files
@@ -186,7 +191,11 @@ endif()
 
 # NOTE: Add all defined targets (e.g. executables, libraries, etc. )
 # NOTE: RUN_SANITIZERS is optional, if it's not present it will default to true
-set_compiler_flags(RUN_SANITIZERS TRUE TARGET_NAMES ${MAIN_EXECUTABLE_NAME})
+set(RUN_SANITIZERS TRUE)
+if(CUDA_ENABLED)
+    set(RUN_SANITIZERS FALSE)
+endif()
+set_compiler_flags(RUN_SANITIZERS ${RUN_SANITIZERS} TARGET_NAMES ${MAIN_EXECUTABLE_NAME})
 # set_compiler_flags(TARGET_NAMES ${MAIN_EXECUTABLE_NAME} ${FOO} ${BAR})
 # where ${FOO} and ${BAR} represent additional executables or libraries
 # you want to compile with the set compiler flags
