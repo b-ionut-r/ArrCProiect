@@ -197,6 +197,30 @@ jobs:
           method: 'network'
           sub-packages: '["nvcc", "cudart"]'
 
+      - name: Set CUDA environment (Windows)
+        if: runner.os == 'Windows' && matrix.cuda_incompatible != true
+        shell: bash
+        run: |
+          CUDA_ROOT="${{ steps.cuda-toolkit-windows.outputs.CUDA_PATH }}"
+          if [ -z "${CUDA_ROOT}" ]; then
+            echo "CUDA_PATH not set by installer"
+            exit 1
+          fi
+          for i in {1..30}; do
+            if [ -x "${CUDA_ROOT}/bin/nvcc.exe" ]; then
+              break
+            fi
+            echo "Waiting for nvcc to appear in ${CUDA_ROOT}/bin..."
+            sleep 10
+          done
+          if [ ! -x "${CUDA_ROOT}/bin/nvcc.exe" ]; then
+            echo "nvcc not found at ${CUDA_ROOT}/bin/nvcc.exe"
+            exit 1
+          fi
+          echo "CUDAToolkit_ROOT=${CUDA_ROOT}" >> "${GITHUB_ENV}"
+          echo "CMAKE_CUDA_COMPILER=${CUDA_ROOT}/bin/nvcc.exe" >> "${GITHUB_ENV}"
+          echo "${CUDA_ROOT}/bin" >> "${GITHUB_PATH}"
+
       - name: Install packages
         uses: ./.github/actions/install-packages
 
