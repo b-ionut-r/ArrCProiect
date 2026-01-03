@@ -47,9 +47,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install CUDA Toolkit
-        uses: Jimver/cuda-toolkit@v0.2.16
+        uses: Jimver/cuda-toolkit@v0.2.22
         with:
-          cuda: '12.4.0'
+          cuda: '12.6.3'
           method: 'network'
           sub-packages: '["nvcc", "cudart"]'
 
@@ -68,9 +68,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install CUDA Toolkit
-        uses: Jimver/cuda-toolkit@v0.2.16
+        uses: Jimver/cuda-toolkit@v0.2.22
         with:
-          cuda: '12.4.0'
+          cuda: '12.6.3'
           method: 'network'
           sub-packages: '["nvcc", "cudart"]'
 
@@ -181,21 +181,21 @@ jobs:
 
       - name: Install CUDA Toolkit (Linux)
         if: runner.os == 'Linux'
-        uses: Jimver/cuda-toolkit@v0.2.16
+        uses: Jimver/cuda-toolkit@v0.2.22
         id: cuda-toolkit-linux
         with:
-          cuda: '12.4.0'
+          cuda: '12.6.3'
           method: 'network'
           sub-packages: '["nvcc", "cudart"]'
 
       - name: Install CUDA Toolkit (Windows)
         if: runner.os == 'Windows' && matrix.cuda_incompatible != true
-        uses: Jimver/cuda-toolkit@v0.2.16
+        uses: Jimver/cuda-toolkit@v0.2.22
         id: cuda-toolkit-windows
         with:
-          cuda: '12.4.0'
-          method: 'network'
-          sub-packages: '["nvcc", "cudart"]'
+          cuda: '12.6.3'
+          method: 'local'
+          sub-packages: '["nvcc", "cudart", "visual_studio_integration"]'
 
       - name: Set CUDA environment (Windows)
         if: runner.os == 'Windows' && matrix.cuda_incompatible != true
