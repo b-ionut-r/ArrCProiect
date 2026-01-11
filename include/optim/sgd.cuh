@@ -4,6 +4,7 @@
 
 #ifndef ARRC_SGD_H
 #define ARRC_SGD_H
+
 #include <iostream>
 #include "optimizer.h"
 #include "ndarray.cuh"
@@ -11,9 +12,9 @@
 class SGD: public Optimizer {
 private:
     float beta;
-    std::vector<arr::NDArrayPtrVariant> momentum;
+    std::vector<NDArray<float>*> momentum;
 public:
-    SGD(const std::vector<tensor::TensorSharedVariant> &params, const float &lr,
+    SGD(std::vector<tensor::TensorPtrVariant> params, const float &lr,
         const float &weightDecay, const float &beta, const ComputeDType &dtype = FLOAT);
     ~SGD() override;
     void step() override;

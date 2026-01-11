@@ -10,13 +10,14 @@
 #include <string>
 #include <list>
 #include <memory>
-#include "ndarray.cuh"
 #include "elementwise_kernels.cuh"
 #include "slices.h"
 #include "utils.h"
 #include "exceptions.h"
 #include <cuda_fp16.h>
 #include <cuda_bf16.h>
+#include "cuda/std/type_traits"
+#include "type_traits.cuh"
 #include <variant>
 
 
@@ -24,9 +25,9 @@
 template <typename dtype>
 class NDArray;
 template <typename dtype>
-ostream& operator<<(ostream &os, const NDArray<dtype> &arr);
+std::ostream& operator<<(std::ostream &os, const NDArray<dtype> &arr);
 template <typename dtype>
-istream& operator>>(istream &is, NDArray<dtype> &arr);
+std::istream& operator>>(std::istream &is, NDArray<dtype> &arr);
 ///
 
 
@@ -34,8 +35,8 @@ template <typename dtype>
 class NDArray{
 protected:
     dtype *data;
-    vector<int> shape; int ndim; int size;
-    vector<int> strides;
+    std::vector<int> shape; int ndim; int size;
+    std::vector<int> strides;
     int itemBytes;
     int offset; bool ownsData;
     int N_BLOCKS; int N_THREADS = 256;
@@ -51,10 +52,10 @@ public:
     using value_type = dtype;
     /// CONSTRUCTORS and DESTRUCTORS
     NDArray(); // default constructor
-    NDArray(const vector<int> &shape); // alocator constructor
+    NDArray(const std::vector<int> &shape); // alocator constructor
     void _computeStrides();
-    NDArray(dtype *data, const vector<int> &shape, const int &offset,
-            const vector<int> &strides); // viewer constructor
+    NDArray(dtype *data, const std::vector<int> &shape, const int &offset,
+            const std::vector<int> &strides); // viewer constructor
     NDArray(const NDArray<dtype> &other); // copy constructor
     NDArray(NDArray<dtype> &&other) noexcept; /* move constructor
     for returned rvalues views of ndarray. */
@@ -63,11 +64,12 @@ public:
 
     /// GETTERS and SETTERS (inline)
     dtype* getData() {return data;}
-    vector<int> getShape() const {return shape;}
+    const dtype* getData() const {return data;}
+    std::vector<int> getShape() const {return shape;}
     int getNDim() const {return ndim;}
     int getSize() const {return size;}
-    vector<int> getStrides() const {return strides;}
-    void setStrides(const vector <int> &new_strides) {
+    std::vector<int> getStrides() const {return strides;}
+    void setStrides(const std::vector <int> &new_strides) {
         if (strides.size() != new_strides.size()) {
             throw NDimMismatchException("New strides vector must have "
                                         "same size as old strides vector.");
@@ -87,7 +89,7 @@ public:
     NDArray<dtype> executeElementWise(Op op, const NDArray *other = nullptr,
                                       NDArray *final = nullptr) const;
     dtype& operator[](const std::vector<int>& idx);
-    NDArray operator[](vector<Slice> slices);
+    NDArray operator[](std::vector<Slice> slices);
     NDArray& operator=(const dtype &value);
     NDArray& operator=(const NDArray &other);
     NDArray operator+(const NDArray &other) const;
@@ -99,8 +101,8 @@ public:
     NDArray operator*(const dtype &value) const;
     NDArray operator/(const NDArray &other) const;
     NDArray operator/(const dtype &value) const;
-    friend ostream& operator<< <>(ostream &os, const NDArray<dtype> &arr);
-    friend istream& operator>> <>(istream &is, NDArray<dtype> &arr);
+    friend std::ostream& operator<< <>(std::ostream &os, const NDArray<dtype> &arr);
+    friend std::istream& operator>> <>(std::istream &is, NDArray<dtype> &arr);
 
     /// OTHERS
     template <typename newDtype>
@@ -133,7 +135,7 @@ NDArray<dtype>::NDArray():
 
 
 template<typename dtype>
-NDArray<dtype>::NDArray(const vector<int> &shape):
+NDArray<dtype>::NDArray(const std::vector<int> &shape):
     shape(shape),
     ndim(shape.size()),
     strides(shape.size()),
@@ -165,7 +167,7 @@ void NDArray<dtype>::_computeStrides() {
 }
 
 template<typename dtype>
-NDArray<dtype>::NDArray(dtype *data, const vector<int> &shape, const int &offset, const vector<int> &strides):
+NDArray<dtype>::NDArray(dtype *data, const std::vector<int> &shape, const int &offset, const std::vector<int> &strides):
     data(data),
     shape(shape),
     ndim(shape.size()),
@@ -276,7 +278,7 @@ bool NDArray<dtype>::isContiguous() const {
 template<typename dtype>
 dtype& NDArray<dtype>::operator[](const std::vector<int>& idx) {
     if (idx.size() != ndim) {
-        throw IndexingException(to_string(ndim) + " indices are needed.");
+        throw IndexingException(std::to_string(ndim) + " indices are needed.");
     }
     int flat_idx = 0;
     for (int i = 0; i < ndim; i++) {
@@ -286,10 +288,10 @@ dtype& NDArray<dtype>::operator[](const std::vector<int>& idx) {
 }
 
 template <typename dtype>
-NDArray<dtype> NDArray<dtype>::operator[](vector<Slice> slices) {
+NDArray<dtype> NDArray<dtype>::operator[](std::vector<Slice> slices) {
     int n_slices = slices.size();
     if (n_slices > ndim) {
-        throw IndexingException("Too many slices. Only " + to_string(ndim)
+        throw IndexingException("Too many slices. Only " + std::to_string(ndim)
             + " slices are needed.");
     }
     for (int i = 0; i < n_slices; i++) {
@@ -299,8 +301,8 @@ NDArray<dtype> NDArray<dtype>::operator[](vector<Slice> slices) {
         slices.push_back(Slice(0, shape[n_slices], 1));
         n_slices++;
     }
-    vector<int> new_shape(ndim);
-    vector<int> new_strides(ndim);
+    std::vector<int> new_shape(ndim);
+    std::vector<int> new_strides(ndim);
     int ptr_offset = offset;
     for (int i = 0; i < ndim; i++) {
         int start = slices[i].getStart();
@@ -322,14 +324,13 @@ NDArray<dtype> NDArray<dtype>::executeElementWise(
     const NDArray<dtype> *other,
     NDArray<dtype> *final) const
 {
-    /* first, second result */
-    bool allContig = this->isContiguous() && (other ? other->isContiguous() : true);
+    /* first, second => result */
     /// HANDLE BROADCASTING
     NDArray<dtype> *result = nullptr;
     const NDArray<dtype> *first = nullptr;
     const NDArray<dtype> *second = nullptr;
     bool delFirst = false, delSecond = false, delResult = false;
-    if (other == nullptr || final != nullptr) {
+    if (other == nullptr) {
         first = this;
         second = other;
         result = final? final: new NDArray<dtype>(first->shape);
@@ -338,8 +339,8 @@ NDArray<dtype> NDArray<dtype>::executeElementWise(
         auto info = getBroadcastInfo(*this, *other);
         if (info.aBroadcastAxes.empty()) first = this;
         else {
-            vector<int> newStrides = this -> strides;
-            for (int i = 0; i < info.aBroadcastAxes.size(); i++) {
+            std::vector<int> newStrides = this -> strides;
+            for (size_t i = 0; i < info.aBroadcastAxes.size(); i++) {
                 newStrides[info.aBroadcastAxes[i]] = 0;
             }
             first = new NDArray<dtype>(this->data, info.finalShape, this->offset, newStrides);
@@ -347,21 +348,22 @@ NDArray<dtype> NDArray<dtype>::executeElementWise(
         }
         if (info.bBroadcastAxes.empty()) second = other;
         else{
-            vector<int> newStrides = other -> strides;
-            for (int i = 0; i < info.bBroadcastAxes.size(); i++) {
+            std::vector<int> newStrides = other -> strides;
+            for (size_t i = 0; i < info.bBroadcastAxes.size(); i++) {
                 newStrides[info.bBroadcastAxes[i]] = 0;
             }
             second = new NDArray<dtype>(other->data, info.finalShape, other->offset, newStrides);
             delSecond = true;
         }
-        result = new NDArray<dtype>(info.finalShape);
-        delResult = true;
+        result = final ? final : new NDArray<dtype>(info.finalShape);
+        delResult = (final == nullptr);
     }
     cudaError_t err = cudaSuccess;
-
+    bool allContig = (first->isContiguous() && (second ? other->isContiguous() : true)
+                      && (result? result->isContiguous(): true));
     try {
         if (allContig) {
-            elementWiseKernelContiguous<<<N_BLOCKS, N_THREADS>>>(
+            elementWiseKernelContiguous<dtype, dtype, Op><<<N_BLOCKS, N_THREADS>>>(
                 result->data, result->offset, result->size,
                 op,
                 first->data, first->offset,
@@ -377,7 +379,7 @@ NDArray<dtype> NDArray<dtype>::executeElementWise(
                 first->allocateDeviceMetadata(&dFirstStrides, nullptr);
                 if (second) second->allocateDeviceMetadata(&dSecondStrides, nullptr);
 
-                elementWiseKernelStrided<<<N_BLOCKS, N_THREADS>>>(
+                elementWiseKernelStrided<dtype, dtype, Op><<<N_BLOCKS, N_THREADS>>>(
                     result->data, result->offset, dResultStrides,
                     result->size, result->ndim, dResultShape,
                     op,
@@ -386,7 +388,7 @@ NDArray<dtype> NDArray<dtype>::executeElementWise(
                 );
                 cudaDeviceSynchronize();
             } catch (...) {
-                // Clean up device memory on exception
+                // Clean up device memory on exception (to prevent leakage)
                 if (dResultShape) cudaFree(dResultShape);
                 if (dResultStrides) cudaFree(dResultStrides);
                 if (dFirstStrides) cudaFree(dFirstStrides);
@@ -403,7 +405,7 @@ NDArray<dtype> NDArray<dtype>::executeElementWise(
             throw CudaKernelException(cudaGetErrorString(err));
         }
     } catch (...) {
-        // Clean up temporary objects on any exception
+        // Clean up device memory on exception (to prevent leakage)
         if (delFirst) delete first;
         if (delSecond) delete second;
         if (delResult) delete result;
@@ -509,13 +511,20 @@ NDArray<dtype> operator/(const dtype &value, const NDArray<dtype> &arr) {
     return arr.executeElementWise(ScalarRDivOp<dtype>{value}, nullptr, nullptr);
 }
 
+/// HANDLE CROSS-TYPE OPERATORS VIA MACRO
+NDARRAY_BINARY_CROSS_OP(+)
+NDARRAY_BINARY_CROSS_OP(-)
+NDARRAY_BINARY_CROSS_OP(*)
+NDARRAY_BINARY_CROSS_OP(/)
+///
+
 template <typename dtype>
-ostream& operator<<(ostream &os, const NDArray<dtype> &arr) {
+std::ostream& operator<<(std::ostream &os, const NDArray<dtype> &arr) {
     if (arr.size == 0) {
         os << "[]";
         return os;
     }
-    vector<int> multi_idx(arr.ndim);
+    std::vector<int> multi_idx(arr.ndim);
     for (int i = 0; i < arr.size; i++) {
         int remaining = i;
         for (int d = arr.ndim - 1; d >= 0; d--) {
@@ -528,7 +537,7 @@ ostream& operator<<(ostream &os, const NDArray<dtype> &arr) {
         else {
             for (int d = 0; d < arr.ndim - 1; d++) {
                 if (multi_idx[d + 1] == 0) {
-                    if (d == arr.ndim - 2) os << endl;
+                    if (d == arr.ndim - 2) os << std::endl;
                     os << "[";
                 } else {
                     break;
@@ -559,7 +568,7 @@ ostream& operator<<(ostream &os, const NDArray<dtype> &arr) {
 }
 
 template <typename dtype>
-istream& operator>>(istream &is, NDArray<dtype> &arr) {
+std::istream& operator>>(std::istream &is, NDArray<dtype> &arr) {
     if (arr.ownsData) {
         for (int i = 0; i < arr.size; i++) {
             is >> arr.data[i];
@@ -594,44 +603,48 @@ void NDArray<dtype>::allocateDeviceMetadata(int** dStrides, int** dShape) const 
 template <typename dtype>
 template <typename newDtype>
 NDArray<newDtype> NDArray<dtype>::cast() const {
+    if constexpr (cuda::std::is_same_v<newDtype, dtype>) {
+        return *this;  // if types are the same, return the object itself
+    }
+    // Else
     NDArray<newDtype> result(shape);
+    CastOp<newDtype, dtype> op{};
 
-    int* dShape = nullptr;
-    int* dSrcStrides = nullptr;
-    int* dDstStrides = nullptr;
-
-    try {
-        cudaMalloc(&dShape, ndim * sizeof(int));
-        cudaMalloc(&dSrcStrides, ndim * sizeof(int));
-        cudaMalloc(&dDstStrides, ndim * sizeof(int));
-
-        cudaMemcpy(dShape, shape.data(), ndim * sizeof(int), cudaMemcpyHostToDevice);
-        cudaMemcpy(dSrcStrides, strides.data(), ndim * sizeof(int), cudaMemcpyHostToDevice);
-        auto resultStrides = result.getStrides();
-        cudaMemcpy(dDstStrides, resultStrides.data(), ndim * sizeof(int), cudaMemcpyHostToDevice);
-
-        castKernel<newDtype, dtype><<<N_BLOCKS, N_THREADS>>>(
-            result.getData(), 0, dDstStrides,
-            data, offset, dSrcStrides,
-            size, ndim, dShape
+    if (isContiguous()) {
+        // Fast path: contiguous source
+        elementWiseKernelContiguous<newDtype, dtype, CastOp<newDtype, dtype>>
+            <<<N_BLOCKS, N_THREADS>>>(
+            result.getData(), 0, size,
+            op,
+            data, offset
         );
         cudaDeviceSynchronize();
+    } else {
+        // Slow path: strided source
+        int *dShape = nullptr, *dSrcStrides = nullptr, *dDstStrides = nullptr;
+        try {
+            allocateDeviceMetadata(&dSrcStrides, &dShape);
+            result.allocateDeviceMetadata(&dDstStrides, nullptr);
 
-        cudaError_t err = cudaGetLastError();
-        if (err != cudaSuccess) {
-            throw CudaKernelException(cudaGetErrorString(err));
+            elementWiseKernelStrided<newDtype, dtype, CastOp<newDtype, dtype>>
+                <<<N_BLOCKS, N_THREADS>>>(
+                result.getData(), 0, dDstStrides,
+                size, ndim, dShape,
+                op,
+                data, offset, dSrcStrides
+            );
+            cudaDeviceSynchronize();
+        } catch (...) {
+            // Clean up device memory on exception (to prevent leakage)
+            cudaFreeMulti({dShape, dSrcStrides, dDstStrides});
+            throw CudaKernelException("Failed to cast array to new type.");
         }
-    } catch (...) {
-        if (dShape) cudaFree(dShape);
-        if (dSrcStrides) cudaFree(dSrcStrides);
-        if (dDstStrides) cudaFree(dDstStrides);
-        throw;
+        cudaFreeMulti({dShape, dSrcStrides, dDstStrides});
     }
-
-    cudaFree(dShape);
-    cudaFree(dSrcStrides);
-    cudaFree(dDstStrides);
-
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        throw CudaKernelException(cudaGetErrorString(err));
+    }
     return result;
 }
 
@@ -654,9 +667,9 @@ NDArray<dtype> NDArray<dtype>::ones_like() const {
 /// BROADCASTING HELPERS ///
 template <typename dtype>
 struct BroadcastInfo {
-    vector<int> finalShape;  // container 1
-    vector<int> aBroadcastAxes; // container 2
-    vector<int> bBroadcastAxes; // container 2
+    std::vector<int> finalShape;
+    std::vector<int> aBroadcastAxes;
+    std::vector<int> bBroadcastAxes;
 };
 
 template <typename dtype>
@@ -690,50 +703,78 @@ BroadcastInfo<dtype> getBroadcastInfo(const NDArray<dtype> &a, const NDArray<dty
     return out;
 }
 
-/// VARIANTS
 
+/// VARIANTS
 namespace arr {
     template <typename dtype>
     using NDArray = NDArray<dtype>;
     // Reduced variant types to avoid NVCC template recursion limits with MSVC's STL
     using NDArrayVariant = std::variant<
-        NDArray<int32_t>,
+        NDArray<int>,
         NDArray<float>,
         NDArray<double>,
-        NDArray<__nv_bfloat16>
+        NDArray<__half>,
     >;
     using NDArrayPtrVariant = std::variant<
-        NDArray<int32_t>*,
+        NDArray<int>*,
         NDArray<float>*,
         NDArray<double>*,
-        NDArray<__nv_bfloat16>*
-    >;
-
-    using NDArrayUniquePtrVariant = std::variant<
-        std::unique_ptr<NDArray<int32_t>>,
-        std::unique_ptr<NDArray<float>>,
-        std::unique_ptr<NDArray<double>>,
-        std::unique_ptr<NDArray<__nv_bfloat16>>
+        NDArray<__half>*
     >;
 
     template <typename dtype>
-    NDArray<dtype> make_constant(const vector<int> &shape, const dtype &value) {
+    NDArray<dtype> make_constant(const std::vector<int> &shape, const dtype &value) {
         NDArray<dtype> array(shape);
-        array = (dtype)value;
+        array = static_cast<dtype>(value);
         return array;
     }
 
     template <typename dtype>
-    NDArray<dtype> make_zeros(const vector<int> &shape) {
-        return make_constant(shape, (dtype)0);
+    NDArray<dtype> make_zeros(const std::vector<int> &shape) {
+        return make_constant(shape, static_cast<dtype>(0));
     }
     template <typename dtype>
-    NDArray<dtype> make_ones(const vector<int> &shape) {
-        return make_constant(shape, (dtype)1);
+    NDArray<dtype> make_ones(const std::vector<int> &shape) {
+        return make_constant(shape, static_cast<dtype>(1));
+    }
+
+    template <typename dtype>
+    NDArray<dtype> add(const NDArray<dtype> &a, const NDArray<dtype> &b) {
+        return a + b;
+    }
+
+    template <typename dtype>
+    void add(const NDArray<dtype> &a, const NDArray<dtype> &b, NDArray<dtype> &out) {
+        out = a + b;
+    }
+
+    template <typename dtype>
+    NDArray<dtype> subtract(const NDArray<dtype> &a, const NDArray<dtype> &b) {
+        return a - b;
+    }
+    template <typename dtype>
+    void subtract(const NDArray<dtype> &a, const NDArray<dtype> &b, NDArray<dtype> &out) {
+        out = a - b;
+    }
+
+    template <typename dtype>
+    NDArray<dtype> multiply(const NDArray<dtype> &a, const NDArray<dtype> &b) {
+        return a * b;
+    }
+    template <typename dtype>
+    void multiply(const NDArray<dtype> &a, const NDArray<dtype> &b, NDArray<dtype> &out) {
+        out = a * b;
+    }
+
+    template <typename dtype>
+    NDArray<dtype> divide(const NDArray<dtype> &a, const NDArray<dtype> &b) {
+        return a / b;
+    }
+    template <typename dtype>
+    void divide(const NDArray<dtype> &a, const NDArray<dtype> &b, NDArray<dtype> &out) {
+        out = a / b;
     }
 }
-
-
 
 
 #endif //ARRC_NDARRAY_H

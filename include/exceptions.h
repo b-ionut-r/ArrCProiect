@@ -7,13 +7,12 @@
 
 #include <exception>
 #include <string>
-using namespace std;
 
-class ArrcException : public exception {
+class ArrcException : public std::exception {
 protected:
-    string message;
+    std::string message;
 public:
-    explicit ArrcException(const string &msg) : message("ArrC Error: " + msg) {}
+    explicit ArrcException(const std::string &msg) : message("ArrC Error: " + msg) {}
     const char* what() const noexcept override {
         return message.c_str();
     }
@@ -21,34 +20,41 @@ public:
 
 class SizeMismatchException : public ArrcException {
 public:
-    SizeMismatchException(const string &msg)
+    SizeMismatchException(const std::string &msg)
         : ArrcException("Size Mismatch -> " + msg) {}
 };
 
 class NDimMismatchException : public ArrcException {
 public:
-    NDimMismatchException(const string &msg)
+    NDimMismatchException(const std::string &msg)
         : ArrcException("NDim Mismatch -> " + msg) {}
 };
 
 
 class ShapeMismatchException : public ArrcException {
 public:
-    ShapeMismatchException(const string &msg)
+    ShapeMismatchException(const std::string &msg)
         : ArrcException("Shape Mismatch -> " + msg) {}
 };
 
 
 class IndexingException : public ArrcException {
 public:
-    IndexingException(const string &msg)
+    IndexingException(const std::string &msg)
         : ArrcException("Indexing/Slicing Error -> " + msg) {}
 };
 
 class CudaKernelException : public ArrcException {
 public:
-    explicit CudaKernelException(const string &cudaError)
+    explicit CudaKernelException(const std::string &cudaError)
         : ArrcException("CUDA Kernel Failure -> " + cudaError) {}
+};
+
+
+class BackPropException : public ArrcException {
+public:
+    explicit BackPropException(const std::string &msg)
+        : ArrcException("Backpropagation Error -> " + msg) {}
 };
 
 #endif // ARRC_EXCEPTIONS_H

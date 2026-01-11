@@ -1,100 +1,176 @@
-# Nu primesc notă pentru că nu am pus titlu și descriere
+# ArrC - CUDA Autograd Framework
 
-### Folosiți template-ul corespunzător grupei voastre!
+ArrC is a small CUDA-first deep learning playground built as an OOP project. It provides GPU-backed NDArrays, an autograd Tensor wrapper, and CUDA optimizers, all demonstrated via a CLI menu.
 
-| Laborant  | Link template                                |
-|-----------|----------------------------------------------|
-| Dragoș B  | https://github.com/Ionnier/oop-template      |
-| Tiberiu M | https://github.com/MaximTiberiu/oop-template |
-| Marius MC | https://github.com/mcmarius/oop-template     |
+## Requirements
 
-## Instrucțiuni de compilare
+- CMake 3.26+
+- C++ compiler with C++23 support
+- CUDA Toolkit (nvcc) for GPU builds
 
-Proiectul este configurat cu CMake.
+## Build and Run
 
-Instrucțiuni pentru terminal:
+### Windows (Ninja)
+```sh
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --config Debug
+.\build\oop.exe
+```
 
-1. Pasul de configurare
+### Generic CMake
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
-# sau ./scripts/cmake.sh configure
+cmake --build build --config Debug
 ```
 
-Sau pe Windows cu GCC:
+### Optional Scripts (bash)
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -G Ninja
-# sau ./scripts/cmake.sh configure -g Ninja
+./scripts/cmake.sh configure
+./scripts/cmake.sh build
 ```
 
-La acest pas putem cere să generăm fișiere de proiect pentru diverse medii de lucru.
+## Quick Usage
 
-## Cerințe obligatorii
+### NDArray
+```cpp
+#include "ndarray.cuh"
 
-Nerespectarea duce la nepunctarea proiectului
+NDArray<float> a({2, 2});
+NDArray<float> b({2, 2});
+a = 5.0f;
+b = 2.0f;
 
-  - programul va fi scris în C++
-  - programul va avea un meniu interactiv (doar pentru ilustrarea funcționalității)
-  - programul nu are erori de compilare
-  - fară variabile globale
-  - datele membre private(sau protected)
-  - GitHub Actions trecute
-  - commit-uri pe Git adecvate si punctuale
-  - folosirea a funcționalităților limbajului fără sens
-  - folosirea a funcționlităților limbajului cu scopul de a încălca "legal" o altă regulă
-      - folosirea excesivă a claselor friend
-      - folosirea excesviă a elementelor statice
-  - lipsa separarea implementarii de definitie
+auto c = a + b;
+std::cout << c << std::endl;
 
-## Cerințe
-- [ ] definirea a minim **2-3 ieararhii de clase** care sa interactioneze in cadrul temei alese (fie prin compunere, agregare sau doar sa apeleze metodele celeilalte intr-un mod logic) (6p)
-  - minim o clasa cu:
-    - [ ] constructori de inițializare [*](https://github.com/Ionnier/poo/tree/main/labs/L02#crearea-obiectelor)
-    - [ ] constructor supraîncărcat [*](https://github.com/Ionnier/poo/tree/main/labs/L02#supra%C3%AEnc%C4%83rcarea-func%C8%9Biilor)
-    - [ ] constructori de copiere [*](https://github.com/Ionnier/poo/tree/main/labs/L02#crearea-obiectelor)
-    - [ ] `operator=` de copiere [*](https://github.com/Ionnier/poo/tree/main/labs/L02#supra%C3%AEnc%C4%83rcarea-operatorilor)
-    - [ ] destructor [*](https://github.com/Ionnier/poo/tree/main/labs/L02#crearea-obiectelor)
-    - [ ] `operator<<` pentru afișare (std::ostream) [*](https://github.com/Ionnier/poo/blob/main/labs/L02/fractie.cpp#L123)
-    - [ ] `operator>>` pentru citire (std::istream) [*](https://github.com/Ionnier/poo/blob/main/labs/L02/fractie.cpp#L128)
-    - [ ] alt operator supraîncărcat ca funcție membră [*](https://github.com/Ionnier/poo/blob/main/labs/L02/fractie.cpp#L32)
-    - [ ] alt operator supraîncărcat ca funcție non-membră [*](https://github.com/Ionnier/poo/blob/main/labs/L02/fractie.cpp#L39) - nu neaparat ca friend
-  - in derivate
-      - [ ] implementarea funcționalităților alese prin [upcast](https://github.com/Ionnier/poo/tree/main/labs/L04#solu%C8%9Bie-func%C8%9Bii-virtuale-late-binding) și [downcast](https://github.com/Ionnier/poo/tree/main/labs/L04#smarter-downcast-dynamic-cast)
-        - aceasta va fi făcută prin **2-3** metode specifice temei alese
-        - funcțiile pentru citire / afișare sau destructorul nu sunt incluse deși o să trebuiască să le implementați 
-      - [ ] apelarea constructorului din clasa de bază din [constructori din derivate](https://github.com/Ionnier/poo/tree/main/labs/L04#comportamentul-constructorului-la-derivare)
-      - [ ] suprascris [cc](https://github.com/Ionnier/poo/tree/main/labs/L04#comportamentul-constructorului-de-copiere-la-derivare)/op= pentru copieri/atribuiri corecte
-      - [ ] destructor [virtual](https://github.com/Ionnier/poo/tree/main/labs/L04#solu%C8%9Bie-func%C8%9Bii-virtuale-late-binding)
-  - pentru celelalte clase se va definii doar ce e nevoie
-  - minim o ierarhie mai dezvoltata (cu 2-3 clase dintr-o clasa de baza)
-  - ierarhie de clasa se considera si daca exista doar o clasa de bază însă care nu moștenește dintr-o clasă din altă ierarhie
-- [ ] cât mai multe `const` [(0.25p)](https://github.com/Ionnier/poo/tree/main/labs/L04#reminder-const-everywhere)
-- [ ] funcții și atribute `static` (în clase) [0.5p](https://github.com/Ionnier/poo/tree/main/labs/L04#static)
-  - [ ] 1+ atribute statice non-triviale 
-  - [ ] 1+ funcții statice non-triviale
-- [ ] excepții [0.5p](https://github.com/Ionnier/poo/tree/main/labs/L04#exception-handling)
-  - porniți de la `std::exception`
-  - ilustrați propagarea excepțiilor
-  - ilustrati upcasting-ul în blocurile catch
-  - minim folosit într-un loc în care tratarea erorilor în modurile clasice este mai dificilă
-- [ ] folosirea unei clase abstracte [(0.25p)](https://github.com/Ionnier/poo/tree/main/labs/L04#clase-abstracte)
- - [ ] clase template
-   - [ ] crearea unei clase template [(1p)](https://github.com/Ionnier/poo/tree/main/labs/L08)
-   - [ ] 2 instanțieri ale acestei clase (0.5p)
- - STL [(0.25p)](https://github.com/Ionnier/poo/tree/main/labs/L07#stl)
-   - [ ] utilizarea a două structuri (containere) diferite (vector, list sau orice alt container care e mai mult sau mai putin un array)
-   - [ ] utilizarea a unui algoritm cu funcție lambda (de exemplu, sort, transform)
- - Design Patterns [(0.75p)](https://github.com/Ionnier/poo/tree/main/labs/L08)
-   - [ ] utilizarea a două șabloane de proiectare
+auto view = a[std::vector<Slice>{Slice(0, 2), Slice(0, 1)}];
+```
 
-### Observații
+### Tensor + Autograd
+```cpp
+#include "tensor.h"
+#include "functions/arithmetic.h"
 
-* Pot exista depunctări până la 2p pentru diferite aspecte precum:
-  - memory leak-uri
-  - nefolosirea destructorului virtual la nevoie
-  - abuzarea de diferite concepte (toate funcțiile declarate virtual)
-  - apelarea de funcții virtual în constructori
+Tensor<float> x = tensor::zeros<float>({1}, true);
+Tensor<float> y = tensor::zeros<float>({1}, true);
+x.data()[std::vector<int>{0}] = 3.0f;
+y.data()[std::vector<int>{0}] = 4.0f;
 
-* În general, acestea sunt prezente în [CppCoreGuideline](https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md), dar nu e nevoie să parcurgeți documentul, doar să scrieți codul suficient de organizat
+auto z = x * y;
+z.backward();
 
-* folderele `build/` și `install_dir/` sunt adăugate în fișierul `.gitignore` deoarece
-conțin fișiere generate și nu ne ajută să le versionăm.
+std::cout << "dz/dx = " << x.grad() << std::endl;
+std::cout << "dz/dy = " << y.grad() << std::endl;
+```
+
+### Optimizer
+```cpp
+#include "optim/sgd.cuh"
+
+Tensor<float> w = tensor::ones<float>({2, 2}, true);
+w.grad() = 0.1f;
+
+std::vector<tensor::TensorPtrVariant> params = {w.get()};
+SGD opt(params, 0.01f, 0.0f, 0.9f);
+opt.step();
+```
+
+## Architecture Overview
+
+### NDArray<T>
+
+GPU-backed N-dimensional array with:
+
+- Unified Memory allocation (`cudaMallocManaged`) and RAII cleanup
+- Shape, strides, offset, and view semantics (slicing is non-owning)
+- Elementwise ops (+, -, *, /) with broadcasting support (same ndim required)
+- Strided and contiguous CUDA kernels
+- Deep copy on copy construction; move transfers ownership; views do not own data
+- Global GPU memory tracking via `NDArray<T>::getTotalAllocatedMemory()`
+
+Broadcasting is implemented in the forward pass by creating zero-stride views. Shape mismatches throw `ShapeMismatchException`.
+
+### Tensor<T> and Autograd
+
+`Tensor<T>` is a lightweight handle around a shared `TensorImpl<T>` (copying a
+Tensor shares the same underlying storage):
+
+- `TensorImpl` stores `data`, `grad`, `requiresGrad`, `hasGrad`, and a `gradFn`
+- `grad()` allocates on first use and accumulates via `accumulateGrad()`
+- `backward()` builds a topological order from `Function` parents, then runs reverse
+- Ops are overloaded (`+`, `-`, `*`, `/`, unary `-`) and attach `Function` nodes
+
+Autograd design details:
+
+- No global tape. The graph is owned by Tensors through `gradFn`.
+- Gradients are accumulated in-place using NDArray ops.
+- `Tensor::cast<newDtype>()` attaches a lightweight cast edge:
+  - The casted tensor stores callbacks to cast the gradient back to the parent dtype.
+  - After accumulation, the parent subgraph backpropagates once.
+- Cross-type ops use a common type through `Tensor::cast`.
+- `Tensor::get()` returns a non-owning pointer for optimizer parameter lists.
+
+Limitations:
+
+- Gradient reduction for broadcasted shapes is not implemented in
+  `functions::detail::reduceGradToShape` and will throw.
+- Only elementwise arithmetic has autograd rules (no matmul/conv yet).
+
+### Functions
+
+`functions::Function<T>` is a simple abstract base class storing parent tensors.
+Implemented ops in `include/functions/arithmetic.h`:
+
+- `AddFunction`
+- `SubFunction`
+- `MulFunction`
+- `DivFunction`
+- `NegFunction`
+
+### Optimizers
+
+Base class: `Optimizer` with a Strategy-style `step()` method.
+Concrete optimizers:
+
+- `SGD` (momentum)
+- `Adam` (optionally AdamW)
+- `RMSProp`
+
+Implementation details:
+
+- Parameters are stored as `tensor::TensorPtrVariant` for type flexibility.
+- Momentum buffers are `NDArray<float>` allocated on first construction.
+- Compute type is selected by `ComputeDType` (HALF/FLOAT/DOUBLE).
+- CUDA kernels are fused and invoked per parameter, with `t` incremented per step.
+- Optimizer state is allocated in constructors and released in destructors.
+
+### Exceptions
+
+All errors derive from `ArrcException`:
+
+- `SizeMismatchException`
+- `NDimMismatchException`
+- `ShapeMismatchException`
+- `IndexingException`
+- `CudaKernelException`
+- `BackPropException`
+
+## Demo Program
+
+`main.cu` provides an interactive menu:
+
+1. NDArray demo (templates, operators, copy)
+2. Tensor + autograd demo
+3. Optimizers demo (polymorphism, upcast/downcast)
+4. Exceptions demo
+5. Training demo (minimize `(x - 3)^2`)
+6. Framework info
+
+## Project Layout
+
+- `include/ndarray.cuh` - NDArray implementation and kernels interface
+- `include/tensor.h` - Tensor + autograd
+- `include/functions/*` - Autograd Function nodes
+- `include/optim/*` - Optimizer interfaces
+- `src/optim/*` - Optimizer CUDA implementations
+- `main.cu` - Demo CLI

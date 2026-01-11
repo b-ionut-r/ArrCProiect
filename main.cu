@@ -145,8 +145,8 @@ int main() {
 
             // Backward pass
             z.backward();
-            cout << "dz/dx = " << *(x.grad()) << " (ar trebui 4)\n";
-            cout << "dz/dy = " << *(y.grad()) << " (ar trebui 3)\n";
+            cout << "dz/dx = " << x.grad() << " (ar trebui 4)\n";
+            cout << "dz/dy = " << y.grad() << " (ar trebui 3)\n";
 
             // No global registry - Functions are owned by Tensors
 
@@ -160,14 +160,14 @@ int main() {
 
             // Cream un tensor pentru parametri (handle-style API)
             Tensor<float> w = tensor::ones<float>({2, 2}, true);
-            *w.grad() = 0.1f;
+            w.grad() = 0.1f;
 
-            vector<tensor::TensorSharedVariant> params = {w.shared()};
+            vector<tensor::TensorPtrVariant> params = {w.get()};
 
             // Strategy Pattern - diferiti optimizeri
-            SGD sgd(params, 0.01f, 0.0f, 0.9f, FLOAT);
-            Adam adam(params, 0.001f, 0.0f, 0.9f, 0.999f, 1e-8, FLOAT);
-            RMSProp rms(params, 0.01f, 0.0f, 0.99f, 1e-8, FLOAT);
+            SGD sgd(params, 0.01f, 0.0f, 0.9f);
+            Adam adam(params, 0.001f, 0.0f, 0.9f, 0.999f);
+            RMSProp rms(params, 0.01f, 0.0f, 0.99f);
 
             // Vector de pointeri la clasa de baza (UPCAST implicit)
             vector<Optimizer*> optimizers = {&sgd, &adam, &rms};
@@ -175,7 +175,7 @@ int main() {
             cout << "Apelam step() prin base class pointer:\n";
             for (Optimizer* o : optimizers) {
                 o->zeroGrad();
-                *w.grad() = 0.1f;
+                w.grad() = 0.1f;
                 optimizeStep(o);  // UPCAST
                 cout << endl;
             }
@@ -189,8 +189,8 @@ int main() {
             // Virtual destructor demo
             cout << "\nVirtual destructor test:\n";
             Tensor<float> tmp = tensor::ones<float>({1}, true);
-            *tmp.grad() = 0.1f;
-            vector<tensor::TensorSharedVariant> tmp_params = {tmp.shared()};
+            tmp.grad() = 0.1f;
+            vector<tensor::TensorPtrVariant> tmp_params = {tmp.get()};
 
             Optimizer* ptr = new Adam(tmp_params, 0.001f, 0.0f, 0.9f, 0.999f);
             delete ptr;  // virtual destructor asigura cleanup corect
@@ -264,7 +264,7 @@ int main() {
             Tensor<float> target = tensor::zeros<float>({1}, false);
             target.data()[vector<int>{0}] = 3.0f;
 
-            vector<tensor::TensorSharedVariant> params = {x.shared()};
+            vector<tensor::TensorPtrVariant> params = {x.get()};
             Adam optimizer(params, 0.3f, 0.0f, 0.9f, 0.999f);
 
             for (int step = 0; step < 30; step++) {

@@ -4,21 +4,23 @@
 
 #ifndef ARRC_RMSPROP_H
 #define ARRC_RMSPROP_H
+
 #include <iostream>
 #include "optimizer.h"
+#include "ndarray.cuh"
 
 class RMSProp: public Optimizer {
 private:
     float beta;
     double eps;
-    std::vector<arr::NDArrayPtrVariant> momentum;
+    std::vector<NDArray<float>*> momentum;
 public:
-    RMSProp(const std::vector<tensor::TensorSharedVariant> &params, const float &lr,
-                     const float &weightDecay, const float &beta,
-                     const double &eps = 1e-8, const ComputeDType &dtype = FLOAT);
+    RMSProp(std::vector<tensor::TensorPtrVariant> params, const float &lr,
+            const float &weightDecay, const float &beta,
+            const double &eps = 1e-8, const ComputeDType &dtype = FLOAT);
     ~RMSProp() override;
     void step() override;
-    friend std::ostream & operator<<(std::ostream &os, const RMSProp &sgd);
+    friend std::ostream & operator<<(std::ostream &os, const RMSProp &rms);
     float getBeta() const {return beta;}
     double getEps() const {return eps;}
 };

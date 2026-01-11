@@ -7,68 +7,54 @@
 #include "optim/rmsprop.cuh"
 #include "optim/kernels.cuh"
 #include "exceptions.h"
-#include "ndarray.cuh"
-#include "tensor.h"
-#include "utils.h"
-#include <cuda_fp16.h>
 
-
-RMSProp::RMSProp(const std::vector<tensor::TensorSharedVariant> &params, const float &lr,
+RMSProp::RMSProp(std::vector<tensor::TensorPtrVariant> params, const float &lr,
                  const float &weightDecay, const float &beta,
                  const double &eps, const ComputeDType &dtype):
        Optimizer(params, lr, weightDecay, dtype), beta(beta), eps(eps) {
     try {
-        for (const auto &param: params) {
-            std::visit([&](auto param_shared) {
-                using param_dtype = typename std::decay_t<decltype(*param_shared)>::value_type;
-                auto mom = new NDArray<param_dtype>(param_shared->shape());
-                mom->executeElementWise(SetConstantOp<param_dtype>{static_cast<param_dtype>(0)}, nullptr, mom);
+        for (const auto &param: this->params) {
+            std::visit([&](auto* p) {
+                // Always create momentum in fp32 for numerical stability
+                auto mom = new NDArray<float>(p->shape());
+                *mom = 0.0f;
                 momentum.push_back(mom);
             }, param);
         }
     } catch (...) {
-        for (auto &mom: momentum)
-            std::visit([&](auto mom){ delete mom; }, mom);
-        momentum.clear();
+        RMSProp::~RMSProp();
         throw;
     }
-};
+}
 
 RMSProp::~RMSProp() {
-    for (auto &mom: momentum) {
-        std::visit([&](auto mom){delete mom;}, mom);
-    }
+    for (auto *mom: momentum)
+        delete mom;
     momentum.clear();
-};
+}
 
 void RMSProp::step() {
+    t++;
     for (size_t i = 0; i < params.size(); i++) {
         auto run = [&](auto dummy) {
-            using dtype = decltype(dummy);
-            std::visit([&](auto weak_param, auto mom) {
-                using param_tensor = typename std::decay_t<decltype(weak_param)>::element_type;
-                using param_dtype = typename param_tensor::value_type;
-                using mom_dtype = typename std::decay_t<decltype(*mom)>::value_type;
-
-                if constexpr (std::is_same_v<param_dtype, mom_dtype>) {
-                    if (auto param = weak_param.lock()) {
-                        if (param->requiresGrad() && param->grad() != nullptr) {
-                            int NThreads = 256;
-                            int NBlocks = getNBlocks(param->size(), NThreads);
-                            fusedRMSPropKernel<dtype, param_dtype, param_dtype, param_dtype><<<NBlocks, NThreads>>>(
-                                param->size(),
-                                param->data()->getData(),
-                                param->grad()->getData(),
-                                mom->getData(),
-                                lr,
-                                weightDecay,
-                                beta,
-                                eps
-                            );
-                        }
-                    }
+            using compute_t = decltype(dummy);
+            std::visit([&](auto* param) {
+                using param_t = typename std::decay_t<decltype(*param)>::value_type;
+                if (param->requiresGrad() && param->hasGrad()) {
+                    int NThreads = 256;
+                    int NBlocks = getNBlocks(param->size(), NThreads);
+                    fusedRMSPropKernel<compute_t, param_t, param_t, float><<<NBlocks, NThreads>>>(
+                        param->size(),
+                        param->data().getData(),
+                        param->grad().getData(),
+                        momentum[i]->getData(),
+                        lr,
+                        weightDecay,
+                        beta,
+                        eps
+                    );
                 }
-            }, params[i], momentum[i]);
+            }, params[i]);
         };
         switch (dtype) {
             case HALF: run(__half(0)); break;
@@ -80,18 +66,18 @@ void RMSProp::step() {
     cudaDeviceSynchronize();
     auto err = cudaGetLastError();
     if (err != cudaSuccess) {
-        throw CudaKernelException(cudaGetErrorString(err));
+        throw CudaKernelException(std::string("RMSProp Optimizer kernel error -> ") \
+            + cudaGetErrorString(err));
     }
-    t++;
 }
 
-ostream & operator<<(ostream &os, const RMSProp &rms) {
-    os << "RMSProp optimizer: " << endl;
+std::ostream & operator<<(std::ostream &os, const RMSProp &rms) {
+    os << "RMSProp optimizer: " << std::endl;
     os << "LR: " << rms.lr << ", ";
     os << "Weight Decay: " << rms.weightDecay << ", ";
     os << "Beta: " << rms.beta << ", ";
     os << "Eps: " << rms.eps << ", ";
-    os << "t: " << rms.t << endl;
+    os << "t: " << rms.t << std::endl;
     return os;
 }
 

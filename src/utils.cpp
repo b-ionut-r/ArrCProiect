@@ -1,7 +1,7 @@
 #include <vector>
-#include <algorithm>
-#include "utils.h"
 #include <cuda_runtime.h>
+#include "utils.h"
+
 
 std::vector<int> getSizeAgnosticKernelConfigParams() {
     std::vector<int> params(2);
@@ -17,7 +17,8 @@ int getNBlocks(int n, int threads) {
     cudaGetDeviceProperties(&prop, 0);
     int blocks = (n + threads - 1) / threads;
     int maxBlocks = 8 * prop.multiProcessorCount;
-    return std::min(blocks, maxBlocks); // hard cap
+    if (blocks <= maxBlocks) return blocks;
+    return maxBlocks; // hard cap
 }
 
 int flatToStridedIndex(const int idx, const int offset, const std::vector<int> &strides,

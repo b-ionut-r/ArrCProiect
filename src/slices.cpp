@@ -3,7 +3,6 @@
 //
 
 #include "slices.h"
-#include <vector>
 
 int Slice::size() const {
     if (step > 0) {

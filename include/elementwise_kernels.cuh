@@ -7,29 +7,30 @@
 
 /// Refactored templates for element-wise operations
 /// 2 variants: contiguous and strided (views) arrays
-template<typename dtype, typename Func>
+/// Supports different input/output types (e.g., for casting)
+template<typename OutDtype, typename InDtype, typename Func>
 __global__ void elementWiseKernelContiguous(
-    dtype *output, const int out_offset,
+    OutDtype *output, const int out_offset,
     const int size,
     Func func,
-    const dtype *input_a = nullptr, const int a_offset = 0,
-    const dtype *input_b = nullptr, const int b_offset = 0)
+    const InDtype *input_a = nullptr, const int a_offset = 0,
+    const InDtype *input_b = nullptr, const int b_offset = 0)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= size) return;
     output[out_offset + idx] = func(
-        input_a ? input_a[a_offset + idx]: dtype(0),
-        input_b ? input_b[b_offset + idx]: dtype(0)
+        input_a ? input_a[a_offset + idx]: InDtype(0),
+        input_b ? input_b[b_offset + idx]: InDtype(0)
     );
 }
 
-template<typename dtype, typename Func>
+template<typename OutDtype, typename InDtype, typename Func>
 __global__ void elementWiseKernelStrided(
-    dtype *output, const int out_offset, const int *out_strides,
+    OutDtype *output, const int out_offset, const int *out_strides,
     const int size, const int ndim, const int *shape,
     Func func,
-    const dtype *input_a = nullptr, const int a_offset = 0, const int *a_strides = nullptr,
-    const dtype *input_b = nullptr, const int b_offset = 0, const int *b_strides = nullptr
+    const InDtype *input_a = nullptr, const int a_offset = 0, const int *a_strides = nullptr,
+    const InDtype *input_b = nullptr, const int b_offset = 0, const int *b_strides = nullptr
 )
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -50,37 +51,9 @@ __global__ void elementWiseKernelStrided(
         if (b_strides) b_idx += multi_idx[i] * b_strides[i];
     }
     output[out_idx] = func(
-        input_a? input_a[a_idx]: dtype(0),
-        input_b? input_b[b_idx]: dtype(0)
+        input_a? input_a[a_idx]: InDtype(0),
+        input_b? input_b[b_idx]: InDtype(0)
     );
-}
-
-/// CASTING KERNEL (cross-type)
-template<typename DstType, typename SrcType>
-__global__ void castKernel(
-    DstType *output, const int out_offset, const int *out_strides,
-    const SrcType *input, const int in_offset, const int *in_strides,
-    const int size, const int ndim, const int *shape)
-{
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= size) return;
-
-    // Convert flat index to multi index
-    int multi_idx[33];
-    int remaining = idx;
-    for (int i = ndim - 1; i >= 0; i--) {
-        multi_idx[i] = remaining % shape[i];
-        remaining /= shape[i];
-    }
-
-    int out_idx = out_offset;
-    int in_idx = in_offset;
-    for (int i = 0; i < ndim; i++) {
-        out_idx += multi_idx[i] * out_strides[i];
-        in_idx += multi_idx[i] * in_strides[i];
-    }
-
-    output[out_idx] = static_cast<DstType>(input[in_idx]);
 }
 
 /// FUNCTORS

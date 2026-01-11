@@ -1,6 +1,3 @@
-#include <cmath>
-
-
 template <typename CompT, typename ParamT = CompT, typename GradT = CompT, typename MomT = CompT>
 __global__ void fusedSGDKernel(
     const size_t size,
